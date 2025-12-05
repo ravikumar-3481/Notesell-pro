@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Notes Marketplace</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Use Inter Font -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            min-height: 100vh;
+        }
+        /* Custom Styles for Sidebar and Carousel to enhance aesthetics */
+        .sidebar {
+            transition: transform 0.3s ease-in-out;
+            z-index: 50;
+        }
+        .card-note {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card-note:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .carousel-item {
+            display: none;
+            transition: opacity 0.5s ease-in-out;
+        }
+        .carousel-item.active {
+            display: block;
+            opacity: 1;
+        }
+        .carousel-container {
+            height: 400px; /* Fixed height for the carousel */
+            max-width: 100%;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- 1. Authentication Screen (Login/Signup) -->
+    <div id="auth-screen" class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl w-full max-w-md">
+            <h1 class="text-3xl font-extrabold text-indigo-700 mb-6 text-center">NoteSell Pro</h1>
+            
+            <div id="login-form-container">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Login to your account</h2>
+                <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition duration-150 mb-4 shadow-md">
+                    <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 0C4.477 0 0 4.477 0 10c0 4.237 3.09 7.788 7.206 8.794L8 18h4c.732 0 1.43-.162 2.067-.478C15.42 16.94 16 15.69 16 14.333c0-2.438-1.57-4.498-3.75-5.266L12 8V5.5C12 4.12 10.88 3 9.5 3S7 4.12 7 5.5V8h.5c1.657 0 3 1.343 3 3v1.5H9.5a.5.5 0 01-.5-.5V8H8v3.5a.5.5 0 01-.5.5H7v-2.5C7 7.12 8.12 6 9.5 6S12 7.12 12 8.5v.5h-1a.5.5 0 01-.5-.5V8H10zM10 18c-3.14 0-5.714-2.574-5.714-5.714 0-3.14 2.574-5.714 5.714-5.714s5.714 2.574 5.714 5.714C15.714 15.426 13.14 18 10 18z"/></svg>
+                    Sign in with Google (Mock)
+                </button>
+                <div class="text-center mt-6">
+                    <p class="text-sm text-gray-600">Don't have an account? <a href="#" onclick="showSignup()" class="text-indigo-600 font-medium hover:text-indigo-800">Sign Up</a></p>
+                    <p class="text-xs text-gray-400 mt-2">(This action will sign you in anonymously)</p>
+                </div>
+            </div>
+
+            <div id="signup-form-container" class="hidden">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-6 text-center">Create Account</h2>
+                <button onclick="handleGoogleLogin()" class="w-full flex items-center justify-center bg-red-500 text-white py-3 rounded-lg font-medium hover:bg-red-600 transition duration-150 mb-4 shadow-md">
+                    <svg class="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20"><path d="M10 0C4.477 0 0 4.477 0 10c0 4.237 3.09 7.788 7.206 8.794L8 18h4c.732 0 1.43-.162 2.067-.478C15.42 16.94 16 15.69 16 14.333c0-2.438-1.57-4.498-3.75-5.266L12 8V5.5C12 4.12 10.88 3 9.5 3S7 4.12 7 5.5V8h.5c1.657 0 3 1.343 3 3v1.5H9.5a.5.5 0 01-.5-.5V8H8v3.5a.5.5 0 01-.5.5H7v-2.5C7 7.12 8.12 6 9.5 6S12 7.12 12 8.5v.5h-1a.5.5 0 01-.5-.5V8H10zM10 18c-3.14 0-5.714-2.574-5.714-5.714 0-3.14 2.574-5.714 5.714-5.714s5.714 2.574 5.714 5.714C15.714 15.426 13.14 18 10 18z"/></svg>
+                    Sign up with Google (Mock)
+                </button>
+                <div class="text-center mt-6">
+                    <p class="text-sm text-gray-600">Already have an account? <a href="#" onclick="showLogin()" class="text-indigo-600 font-medium hover:text-indigo-800">Login</a></p>
+                </div>
+            </div>
+
+            <p id="error-message" class="text-red-500 text-sm mt-4 text-center hidden"></p>
+        </div>
+    </div>
+
+    <!-- 2. Main Content (Home Page) -->
+    <div id="main-content" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <!-- Sidebar Toggle (Mobile only) -->
+        <button id="sidebar-toggle" class="md:hidden p-4 bg-indigo-600 text-white fixed top-0 left-0 z-50 rounded-br-lg shadow-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        </button>
+
+        <!-- Sidebar (Fixed on Desktop, Hidden/Slide-out on Mobile) -->
+        <nav id="sidebar" class="sidebar fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 bg-indigo-800 text-white w-64 p-6 flex flex-col shadow-xl">
+            <h2 class="text-3xl font-extrabold mb-8 text-indigo-200">NoteSell</h2>
+            
+            <p class="text-xs text-indigo-300 mb-2">Logged in as:</p>
+            <p id="user-id-display" class="text-sm font-mono bg-indigo-900 p-2 rounded-lg break-words mb-6 text-indigo-100"></p>
+
+            <ul class="space-y-3 flex-grow">
+                <li><a href="#" class="flex items-center p-3 rounded-lg bg-indigo-700 hover:bg-indigo-600 transition font-semibold">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"></path></svg>
+                    Home
+                </a></li>
+                <li><a href="#" class="flex items-center p-3 rounded-lg hover:bg-indigo-700 transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2-4h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v7a2 2 0 002 2z"></path></svg>
+                    My Purchases
+                </a></li>
+                <li><a href="#" class="flex items-center p-3 rounded-lg hover:bg-indigo-700 transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354v15.3l-2.071-2.072M12 4.354l-2.071 2.072M12 4.354l2.071 2.072M12 4.354v15.3m-2.071-2.072L8 15.354M12 19.654l2.071-2.072"></path></svg>
+                    Sell Notes
+                </a></li>
+            </ul>
+
+            <button onclick="handleLogout()" class="mt-8 flex items-center justify-center p-3 rounded-lg bg-red-600 hover:bg-red-700 transition font-semibold">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Logout
+            </button>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="flex-grow p-4 md:p-8 pt-16 md:pt-8">
+
+            <h1 class="text-3xl font-bold text-gray-800 mb-6 hidden md:block">Explore Digital Notes</h1>
+
+            <!-- Carousel Section (Bootstrap Carousel Equivalent) -->
+            <section class="mb-10 shadow-xl rounded-xl overflow-hidden bg-white border border-gray-100">
+                <h2 class="text-xl font-semibold p-4 bg-indigo-50 border-b border-gray-100 text-indigo-700">Featured Collections</h2>
+                <div class="carousel-container relative">
+                    <div id="notes-carousel" class="w-full h-full">
+                        <!-- Carousel Items will be dynamically generated here -->
+                        <div class="carousel-item active p-6 md:p-12 bg-indigo-500 text-white flex items-center justify-center h-full">
+                            <div class="text-center">
+                                <h3 class="text-3xl md:text-5xl font-extrabold mb-3">Welcome to NoteSell!</h3>
+                                <p class="text-lg md:text-xl font-light">Your hub for premium digital study notes and resources.</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item p-6 md:p-12 bg-teal-500 text-white flex items-center justify-center h-full">
+                            <div class="text-center">
+                                <h3 class="text-3xl md:text-5xl font-extrabold mb-3">Boost Your Grades</h3>
+                                <p class="text-lg md:text-xl font-light">Find expertly curated notes from top students globally.</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item p-6 md:p-12 bg-yellow-500 text-gray-900 flex items-center justify-center h-full">
+                            <div class="text-center">
+                                <h3 class="text-3xl md:text-5xl font-extrabold mb-3">Start Selling Today</h3>
+                                <p class="text-lg md:text-xl font-light">Monetize your knowledge effortlessly on our platform.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Carousel Controls -->
+                    <button onclick="changeSlide(-1)" class="absolute top-1/2 left-4 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </button>
+                    <button onclick="changeSlide(1)" class="absolute top-1/2 right-4 transform -translate-y-1/2 bg-gray-800 bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-75 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Notes Grid (Bootstrap Card & Grid Equivalent) -->
+            <section class="mt-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Popular Notes</h2>
+                
+                <div id="notes-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Note Cards will be dynamically inserted here -->
+                </div>
+
+                <div id="loading-indicator" class="text-center py-12 text-gray-500 hidden">
+                    <svg class="animate-spin h-8 w-8 text-indigo-500 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Loading notes...
+                </div>
+                <div id="empty-state" class="text-center py-12 text-gray-500 hidden bg-white p-6 rounded-lg shadow-md mt-6">
+                    <p class="text-lg font-medium">No notes available yet!</p>
+                    <p class="text-sm mt-2">Check back soon or try adding your own notes to start selling.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, collection, query, getDocs, limit, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // setLogLevel('Debug'); // Enable for debugging
+        
+        // --- GLOBAL SETUP ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let app, db, auth;
+        let userId = null;
+        let isAuthReady = false;
+
+        const authScreen = document.getElementById('auth-screen');
+        const mainContent = document.getElementById('main-content');
+        const userIdDisplay = document.getElementById('user-id-display');
+        const notesGrid = document.getElementById('notes-grid');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const emptyState = document.getElementById('empty-state');
+        const loginFormContainer = document.getElementById('login-form-container');
+        const signupFormContainer = document.getElementById('signup-form-container');
+        const errorMessage = document.getElementById('error-message');
+
+
+        // --- FIREBASE INITIALIZATION & AUTHENTICATION ---
+        function initFirebase() {
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                
+                // 1. Initial Sign-in Attempt
+                if (initialAuthToken) {
+                    signInWithCustomToken(auth, initialAuthToken)
+                        .catch(error => {
+                            console.error("Custom token sign-in failed:", error);
+                            signInAnonymously(auth).catch(err => console.error("Anonymous sign-in failed:", err));
+                        });
+                } else {
+                    signInAnonymously(auth)
+                        .catch(error => console.error("Anonymous sign-in failed:", error));
+                }
+
+                // 2. Auth State Listener
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+                        
+                        // Show Main Content
+                        authScreen.classList.add('hidden');
+                        mainContent.classList.remove('hidden');
+                        userIdDisplay.textContent = userId;
+
+                        // Start data listeners (Notes fetch)
+                        fetchNotes();
+                        
+                        // Seed data if collection is empty (optional for demo)
+                        seedDataIfEmpty();
+
+                    } else {
+                        // Show Auth Screen
+                        isAuthReady = true; // Still ready, but user is logged out
+                        userId = null;
+                        mainContent.classList.add('hidden');
+                        authScreen.classList.remove('hidden');
+                    }
+                });
+
+            } catch (e) {
+                console.error("Firebase Initialization Error:", e);
+                displayError("Firebase initialization failed. Please check your configuration.");
+            }
+        }
+
+        // --- MOCK GOOGLE LOGIN & LOGOUT ---
+        window.handleGoogleLogin = function() {
+            // Since actual Google OAuth is complex for a single file, 
+            // we will simulate a successful sign-in by signing in anonymously, 
+            // which should trigger the onAuthStateChanged listener.
+            signInAnonymously(auth)
+                .then(() => {
+                    console.log("Mock Google Login successful (Signed in anonymously).");
+                })
+                .catch(error => {
+                    console.error("Mock Google Login failed:", error);
+                    displayError("Login failed. Please try again.");
+                });
+        }
+        
+        window.handleLogout = function() {
+            signOut(auth)
+                .then(() => {
+                    console.log("User logged out.");
+                    notesGrid.innerHTML = ''; // Clear notes on logout
+                })
+                .catch(error => {
+                    console.error("Logout error:", error);
+                    displayError("Logout failed.");
+                });
+        }
+
+        // --- UI TOGGLE FUNCTIONS ---
+        window.showSignup = function() {
+            loginFormContainer.classList.add('hidden');
+            signupFormContainer.classList.remove('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        window.showLogin = function() {
+            loginFormContainer.classList.remove('hidden');
+            signupFormContainer.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+        }
+
+        function displayError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+            setTimeout(() => errorMessage.classList.add('hidden'), 5000);
+        }
+
+        // --- FIREBASE DATA HANDLING ---
+
+        const NOTES_COLLECTION_PATH = `artifacts/${appId}/public/data/notes`;
+
+        async function seedDataIfEmpty() {
+            const q = query(collection(db, NOTES_COLLECTION_PATH), limit(1));
+            const snapshot = await getDocs(q);
+
+            if (snapshot.empty) {
+                console.log("Seeding initial data...");
+                const sampleNotes = [
+                    { title: "Advanced CSS Grid Layouts", description: "Master responsive layouts using modern CSS Grid and Flexbox.", price: 9.99, category: "WebDev", image: 'https://placehold.co/400x200/508cfa/ffffff?text=CSS+Grid' },
+                    { title: "Quantum Physics Fundamentals", description: "Simplified explanations of quantum mechanics, wave functions, and entanglement.", price: 19.99, category: "Science", image: 'https://placehold.co/400x200/00b894/ffffff?text=Quantum+Notes' },
+                    { title: "Machine Learning with Python", description: "Introduction to scikit-learn, TensorFlow, and basic model building.", price: 25.50, category: "AI/ML", image: 'https://placehold.co/400x200/ff7675/ffffff?text=ML+Guide' },
+                    { title: "Financial Accounting 101", description: "A quick study guide on debits, credits, ledgers, and balance sheets.", price: 7.00, category: "Finance", image: 'https://placehold.co/400x200/a29bfe/ffffff?text=Accounting+Basics' },
+                ];
+
+                for (let note of sampleNotes) {
+                    // Using setDoc with auto-generated ID for clarity
+                    await setDoc(doc(collection(db, NOTES_COLLECTION_PATH)), note);
+                }
+                console.log("Initial data seeded.");
+            }
+        }
+
+        function renderNoteCard(note) {
+            const priceText = note.price === 0 ? 'Free' : `$${note.price.toFixed(2)}`;
+            
+            return `
+                <div class="card-note bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+                    <img src="${note.image}" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/333333?text=Note+Image';" alt="${note.title}" class="w-full h-48 object-cover">
+                    <div class="p-5">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">${note.category}</span>
+                        <h3 class="text-xl font-bold text-gray-800 mt-2 mb-2">${note.title}</h3>
+                        <p class="text-gray-600 text-sm mb-4">${note.description}</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl font-extrabold text-indigo-700">${priceText}</span>
+                            <button class="bg-indigo-600 text-white px-4 py-2 rounded-full font-medium hover:bg-indigo-700 transition duration-150 shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+                                Buy Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function fetchNotes() {
+            if (!isAuthReady || !userId) return;
+
+            loadingIndicator.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            const notesQuery = query(collection(db, NOTES_COLLECTION_PATH));
+
+            // Use onSnapshot for real-time updates
+            onSnapshot(notesQuery, (snapshot) => {
+                loadingIndicator.classList.add('hidden');
+                
+                if (snapshot.empty) {
+                    notesGrid.innerHTML = '';
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                let html = '';
+                snapshot.forEach(doc => {
+                    const note = doc.data();
+                    html += renderNoteCard(note);
+                });
+                
+                notesGrid.innerHTML = html;
+                emptyState.classList.add('hidden');
+            }, (error) => {
+                console.error("Error fetching notes:", error);
+                loadingIndicator.classList.add('hidden');
+                displayError("Failed to load notes. Please check the console.");
+            });
+        }
+        
+        // Initialize Firebase when the script loads
+        initFirebase();
+
+        // --- CAROUSEL LOGIC ---
+        let currentSlide = 0;
+        let carouselItems = [];
+
+        window.onload = function() {
+            // Wait for the DOM to be fully loaded
+            carouselItems = Array.from(document.querySelectorAll('#notes-carousel .carousel-item'));
+            if (carouselItems.length > 0) {
+                showSlide(0);
+                // Auto-advance every 5 seconds
+                setInterval(() => changeSlide(1), 5000);
+            }
+
+            // Sidebar toggle setup
+            const sidebar = document.getElementById('sidebar');
+            const toggleButton = document.getElementById('sidebar-toggle');
+
+            toggleButton.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+        }
+
+        function showSlide(index) {
+            carouselItems.forEach((item, i) => {
+                item.classList.remove('active');
+                if (i === index) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        window.changeSlide = function(n) {
+            let nextSlide = currentSlide + n;
+            if (nextSlide >= carouselItems.length) {
+                nextSlide = 0;
+            } else if (nextSlide < 0) {
+                nextSlide = carouselItems.length - 1;
+            }
+            currentSlide = nextSlide;
+            showSlide(currentSlide);
+        }
+
+        // Initial check for slide visibility (redundant, but good practice)
+        window.changeSlide(0);
+        
+    </script>
+</body>
+</html>
+
